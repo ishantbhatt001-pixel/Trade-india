@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India Trade Compass</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #0B1437 0%, #1a237e 50%, #0B1437 100%);
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Mandala Background Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255,153,51,0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.03) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255,153,51,0.02) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: mandalaFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes mandalaFloat {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.1); }
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+
+        .title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            background: linear-gradient(45deg, #FF9933, white);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px rgba(255,153,51,0.5)); }
+            to { filter: drop-shadow(0 0 20px rgba(255,153,51,0.8)); }
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Navigation */
+        .nav {
+            position: sticky;
+            top: 0;
+            background: rgba(11, 20, 55, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 1rem 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255,153,51,0.3);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 2px solid transparent;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,153,51,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .nav-btn:hover::before {
+            left: 100%;
+        }
+
+        .nav-btn:hover {
+            border-color: #FF9933;
+            color: #FF9933;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(45deg, #FF9933, #ffad5c);
+            color: #0B1437;
+            box-shadow: 0 10px 30px rgba(255,153,51,0.4);
+        }
+
+        /* Search Bar */
+        .search-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            position: sticky;
+            top: 70px;
+            background: rgba(11, 20, 55, 0.8);
+            backdrop-filter: blur(20px);
+            z-index: 999;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1.5rem 1rem 3.5rem;
+            border: 2px solid rgba(255,153,51,0.3);
+            border-radius: 50px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #FF9933;
+            box-shadow: 0 0 20px rgba(255,153,51,0.3);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,153,51,0.7);
+            font-size: 1.2rem;
+        }
+
+        /* Sections */
+        .section {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 1rem;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease forwards;
+        }
+
+        .section:nth-child(even) {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(45deg, white, #FF9933);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,153,51,0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FF9933, white, #FF9933);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4), 0 0 40px rgba(255,153,51,0.3);
+            border-color: #FF9933;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #FF9933, white);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0B1437;
+        }
+
+        .card-type {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            background: rgba(255,153,51,0.2);
+            color: #FF9933;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #FF9933;
+            margin: 0.5rem 0;
+        }
+
+        .counter {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #FF9933;
+        }
+
+        .card-list {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .card-list li {
+            padding: 0.3rem 0;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .card-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #FF9933;
+        }
+
+        .stars {
+            color: #FF9933;
+            font-size: 1.5rem;
+        }
+
+        /* Chart Section */
+        .chart-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255,153,51,0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-container {
+                gap: 1rem;
+            }
+            
+            .nav-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Hide sections */
+        .section.hidden {
+            display: none;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 3rem 1rem 2rem;
+            margin-top: 5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">India Trade Compass</h1>
+        <p class="subtitle">Navigate India's $1.2T trade landscape. Discover profitable opportunities in exports, imports, and untapped niches.</p>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-container">
+            <button class="nav-btn active" data-section="all">All</button>
+            <button class="nav-btn" data-section="exports">Top Exports</button>
+            <button class="nav-btn" data-section="imports">Top Imports</button>
+            <button class="nav-btn" data-section="niches">Untapped Niches</button>
+            <button class="nav-btn" data-section="opportunities">Opportunities</button>
+            <button class="nav-btn" data-section="trade-balance">Trade Balance</button>
+        </div>
+    </nav>
+
+    <div class="search-container">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" placeholder="Search goods, countries, or opportunities..." id="searchInput">
+        </div>
+    </div>
+
+    <!-- Exports Section -->
+    <section id="exports" class="section">
+        <h2 class="section-title">🏆 Top 10 Most Exported Goods</h2>
+        <div class="cards-grid" id="exports-grid">
+            <!-- Cards populated by JS -->
+        </div>
+    </section>
+
+    <!-- Imports Section -->
+    <section id="imports" class="section">
+        <h2 class="section-title">📉 Top 10 Most Imported Goods</h2>
+        <div class="cards-grid" id="imports-grid">
+            <!-- Cards populated by JS -->
+        </div>
+    </section>
+
+    <!-- Niches Section -->
+    <section id="niches" class="section">
+        <h2 class="section-title">⚠️ Least Traded Niches & Opportunities</h2>
+        <div class="cards-grid" id="niches-grid">
+            <!-- Cards populated by JS -->
+        </div>
+    </section>
+
+    <!-- Opportunities Section -->
+    <section id="opportunities" class="section">
+        <h2 class="section-title">💡 Profitable Business Opportunities</h2>
+        <div class="cards-grid" id="opportunities-grid">
+            <!-- Cards populated by JS -->
+        </div>
+    </section>
+
+    <!-- Trade Balance Section -->
+    <section id="trade-balance" class="section">
+        <h2 class="section-title">📊 India Trade Balance 2024</h2>
+        <div class="chart-container">
+            <canvas id="tradeChart"></canvas>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>📊 Data based on 2024–26 trade statistics. For informational purposes only. Source: Ministry of Commerce, WTO estimates.</p>
+    </footer>
+
+    <script>
+        // Data
+        const data = {
+            exports: [
+                {
+                    name: "Petroleum Products",
+                    value: 85.3,
+                    destinations: ["USA", "UAE", "China", "Netherlands"],
+                    description: "India's world-class refineries process 5M+ barrels daily. Strategic location enables cost-effective exports to Asia & Europe. Consistent global energy demand ensures stable revenue.",
+                    type: "export",
+                    icon: "🛢️"
+                },
+                {
+                    name: "Gems & Jewelry",
+                    value: 42.1,
+                    destinations: ["USA", "Hong Kong", "UAE", "Switzerland"],
+                    description: "Surat diamond hub processes 90% of world's diamonds. Skilled artisans + competitive labor costs. High US/EU demand for Indian craftsmanship.",
+                    type: "export",
+                    icon: "💎"
+                },
+                {
+                    name: "Pharmaceuticals",
+                    value: 27.8,
+                    destinations: ["USA", "UK", "South Africa", "Nigeria"],
+                    description: "World's largest generic drug supplier (20% global market). Cost advantage: 60-80% cheaper than US/EU. Trusted quality post major approvals.",
+                    type: "export",
+                    icon: "💊"
+                },
+                {
+                    name: "Engineering Goods",
+                    value: 112.4,
+                    destinations: ["USA", "UAE", "UK", "Germany"],
+                    description: "Auto components, steel products, machinery. MSME clusters provide scale. Quality certifications open premium markets.",
+                    type: "export",
+                    icon: "⚙️"
+                },
+                {
+                    name: "Textiles & RMG",
+                    value: 38.9,
+                    destinations: ["USA", "UAE", "UK", "Bangladesh"],
+                    description: "World's 2nd largest cotton producer. 45M+ workforce in textile hubs. Fast fashion + sustainable cotton trends.",
+                    type: "export",
+                    icon: "👗"
+                },
+                {
+                    name: "Organic Chemicals",
+                    value: 18.7,
+                    destinations: ["USA", "China", "Brazil", "Germany"],
+                    description: "Specialty chemicals from Gujarat hubs. Backward integration reduces costs. Green chemistry investments attract premium buyers.",
+                    type: "export",
+                    icon: "🧪"
+                },
+                {
+                    name: "Rice (Basmati)",
+                    value: 11.2,
+                    destinations: ["Saudi Arabia", "Iran", "Iraq", "USA"],
+                    description: "GI-tagged premium varieties command 2-3x price. Middle East loves Indian aroma. FSSAI certification builds trust.",
+                    type: "export",
+                    icon: "🍚"
+                },
+                {
+                    name: "Software Services",
+                    value: 194.0,
+                    destinations: ["USA", "UK", "Germany", "Canada"],
+                    description: "150K+ IT firms, 5M+ engineers. Cost: 50% of US rates. Digital transformation boom worldwide.",
+                    type: "export",
+                    icon: "💻"
+                },
+                {
+                    name: "Marine Products",
+                    value: 8.1,
+                    destinations: ["USA", "China", "EU", "Japan"],
+                    description: "2nd largest aquaculture producer. Frozen shrimp = 70% exports. US FDA approval premium pricing.",
+                    type: "export",
+                    icon: "🐟"
+                },
+                {
+                    name: "Iron & Steel",
+                    value: 22.5,
+                    destinations: ["USA", "EU", "Middle East"],
+                    description: "Low-cost production + large capacity. Infrastructure boom globally. Quality upgrades open developed markets.",
+                    type: "export",
+                    icon: "🔩"
+                }
+            ],
+            imports: [
+                {
+                    name: "Crude Oil",
+                    value: 152.6,
+                    sources: ["Saudi Arabia", "Iraq", "UAE", "USA"],
+                    description: "85% energy import dependent. Refining capacity exceeds domestic crude. Strategic stockpiles ensure supply security.",
+                    type: "import",
+                    icon: "🛢️"
+                },
+                {
+                    name: "Gold",
+                    value: 55.8,
+                    sources: ["Switzerland", "UAE", "UK", "USA"],
+                    description: "Cultural demand + jewelry exports. 800+ tonnes annual import. Investment demand during uncertainty.",
+                    type: "import",
+                    icon: "🪙"
+                },
+                {
+                    name: "Electronics",
+                    value: 76.4,
+                    sources: ["China", "Vietnam", "South Korea", "Taiwan"],
+                    description: "Consumer electronics + components. Domestic mfg growing but import substitution slow. Apple/Samsung local assembly emerging.",
+                    type: "import",
+                    icon: "📱"
+                },
+                {
+                    name: "Machinery",
+                    value: 38.2,
+                    sources: ["China", "Germany", "USA", "Japan"],
+                    description: "Precision machinery for manufacturing. Technology gap in high-end equipment. PLI scheme aims at import reduction.",
+                    type: "import",
+                    icon: "⚙️"
+                },
+                {
+                    name: "Coal",
+                    value: 24.3,
+                    sources: ["Indonesia", "Australia", "South Africa"],
+                    description: "60% power generation coal-based. Domestic quality inferior for power plants. Logistics improvements needed.",
+                    type: "import",
+                    icon: "⚫"
+                }
+            ],
+            niches: [
+                {
+                    name: "Processed Foods",
+                    value: "0.8B",
+                    gap: "High domestic production, low value addition. Huge Middle East/US potential. FSSAI + cold chain investments needed.",
+                    type: "export-gap",
+                    icon: "🍲"
+                },
+                {
+                    name: "Furniture",
+                    value: "0.4B",
+                    gap: "Skilled woodworking + design talent. IKEA-type modern furniture demand. Export potential $10B+.",
+                    type: "export-gap",
+                    icon: "🪑"
+                },
+                {
+                    name: "Luxury Goods",
+                    value: "0.2B",
+                    gap: "Artisan skills + storytelling. Growing Asian luxury market. Brand building opportunity.",
+                    type: "export-gap",
+                    icon: "✨"
+                },
+                {
+                    name: "Electric Vehicles",
+                    value: "0.1B",
+                    gap: "Battery mfg investments + FAME policy. Export to Africa/SEA. Two-wheeler EV leadership.",
+                    type: "export-gap",
+                    icon: "🚗"
+                },
+                {
+                    name: "Medical Devices",
+                    value: "1.2B",
+                    gap: "80% import dependent despite healthcare boom. PLI scheme + Make in India. $50B market by 2030.",
+                    type: "import-gap",
+                    icon: "🩺"
+                }
+            ],
+            opportunities: [
+                {
+                    name: "Generic Pharma to Africa",
+                    type: "Export",
+                    cost: "$2-5M",
+                    profit: "★★★★★",
+                    advantage: "Cost leadership + regulatory expertise",
+                    pitch: "Africa's $50B pharma market growing 12% annually. India supplies 30% already but regulated markets untapped. USFDA-approved plants give instant credibility.",
+                    icon: "💊"
+                },
+                {
+                    name: "Agri-Processing for Middle East",
+                    type: "Export",
+                    cost: "$5-10M",
+                    profit: "★★★★☆",
+                    advantage: "Raw material access + halal certification",
+                    pitch: "Middle East imports $20B processed food. Indian spices/fruits have premium positioning. Cold chain infra ready in Mundra/JNPT.",
+                    icon: "🍚"
+                },
+                {
+                    name: "EV Two-Wheeler Export",
+                    type: "Export",
+                    cost: "$10-20M",
+                    profit: "★★★★★",
+                    advantage: "Battery cost leadership + FAME subsidies",
+                    pitch: "Africa/SEA need affordable EVs. Ola/Okinawa scaling production. 70% cost advantage vs Chinese rivals.",
+                    icon: "🏍️"
+                },
+                {
+                    name: "Medical Devices Local Mfg",
+                    type: "Import Substitution",
+                    cost: "$15-30M",
+                    profit: "★★★★☆",
+                    advantage: "Healthcare boom + PLI incentives",
+                    pitch: "Save $10B forex annually. Hospitals prefer local supply. GE/Siemens already partnering Indian firms.",
+                    icon: "🩺"
+                },
+                {
+                    name: "Furniture Export to US/EU",
+                    type: "Export",
+                    cost: "$3-8M",
+                    profit: "★★★★☆",
+                    advantage: "Skilled labor + design schools",
+                    pitch: "US furniture imports $60B. Indian teak + craftsmanship premium. Wayfair/Amazon FBA ready.",
+                    icon: "🛋️"
+                }
+            ]
+        };
+
+        // Initialize app
+        let allCards = [];
+        let currentFilter = 'all';
+
+        // DOM elements
+        const sections = {
+            exports: document.getElementById('exports'),
+            imports: document.getElementById('imports'),
+            niches: document.getElementById('niches'),
+            opportunities: document.getElementById('opportunities'),
+            'trade-balance': document.getElementById('trade-balance')
+        };
+
+        // Render cards
+        function renderCards(containerId, items, type) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = items.map((item, index) => `
+                <div class="card" data-type="${type}" data-keywords="${item.name.toLowerCase()} ${item.destinations?.join(' ') || ''} ${item.sources?.join(' ') || ''}">
+                    <div class="card-header">
+                        <div class="card-icon">${item.icon}</div>
+                        <div>
+                            <div class="card-type">${item.type?.toUpperCase() || type.toUpperCase()}</div>
+                            <h3 style="margin: 0.5rem 0 0 0; font-family: 'Playfair Display', serif;">${item.name}</h3>
+                        </div>
+                    </div>
+                    <div class="card-value counter" data-target="${item.value}">${isNaN(item.value) ? item.value : '0'} ${isNaN(item.value) ? '' : 'B USD'}</div>
+                    ${item.destinations ? `<ul class="card-list"><li>Top Destinations: ${item.destinations.slice(0,3).join(', ')}${item.destinations.length > 3 ? '...' : ''}</li></ul>` : ''}
+                    ${item.sources ? `<ul class="card-list"><li>Top Sources: ${item.sources.slice(0,3).join(', ')}${item.sources.length > 3 ? '...' : ''}</li></ul>` : ''}
+                    ${item.gap ? `<p style="font-size: 0.95rem; line-height: 1.6; margin-top: 1rem;">${item.gap}</p>` : ''}
+                    ${item.pitch ? `
+                        <div style="margin-top: 1.5rem;">
+                            <div style="font-weight: 600; color: #FF9933; margin-bottom: 0.5rem;">Key Advantage: ${item.advantage}</div>
+                            <div style="font-size: 0.9rem; line-height: 1.6;">${item.pitch}</div>
+                            <div class="stars" style="margin-top: 1rem;">${'★'.repeat(parseInt(item.profit.slice(1,-1)))}☆${5-parseInt(item.profit.slice(1,-1)) > 0 ? '☆' : ''}</div>
+                            <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">Startup: ${item.cost}</div>
+                        </div>
+                    ` : `<p style="font-size: 0.95rem; line-height: 1.6;">${item.description}</p>`}
+                </div>
+            `).join('');
+        }
+
+        // Animate counters
+        function animateCounters() {
+            document.querySelectorAll('.counter').forEach(counter => {
+                const target = parseFloat(counter.getAttribute('data-target'));
+                const increment = target / 100;
+                let current = 0;
+                
+                const updateCounter = () => {
+                    if (current < target) {
+                        current += increment;
+                        counter.textContent = isNaN(target) ? counter.textContent : Math.floor(current) + 'B USD';
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        counter.textContent = isNaN(target) ? counter.textContent : target + 'B USD';
+                    }
+                };
+                updateCounter();
+            });
+        }
+
+        // Navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const section = btn.dataset.section;
+                
+                // Update active button
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Show/hide sections
+                Object.keys(sections).forEach(key => {
+                    if (key === section || section === 'all') {
+                        sections[key].classList.remove('hidden');
+                    } else {
+                        sections[key].classList.add('hidden');
+                    }
+                });
+                
+                // Smooth scroll
+                document.querySelector(`#${section}`).scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            });
+        });
+
+        // Search & Filter
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.card').forEach(card => {
+                const keywords = card.dataset.keywords;
+                const type = card.dataset.type;
+                
+                if (query === '' || keywords.includes(query)) {
+                    card.style.display = 'block';
+                    card.style.transform = 'translateY(0)';
+                    card.style.opacity = '1';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize
+        function init() {
+            // Render all cards
+            renderCards('exports-grid', data.exports, 'export');
+            renderCards('imports-grid', data.imports, 'import');
+            renderCards('niches-grid', data.niches, 'niche');
+            renderCards('opportunities-grid', data.opportunities, 'opportunity');
+            
+            // Animate counters after render
+            setTimeout(animateCounters, 500);
+            
+            // Init chart
+            initTradeChart();
+        }
+
+        // Trade Balance Chart
+        function initTradeChart() {
+            const ctx = document.getElementById('tradeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Surplus', 'Deficit'],
+                    datasets: [{
+                        data: [350, 650],
+                        backgroundColor: ['#FF9933', '#FF6B35'],
+                        borderWidth: 0,
+                        borderRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'white',
+                                font: { size: 14, family: 'DM Sans' }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'India: $300B Surplus vs $650B Deficit',
+                            color: 'white',
+                            font: { size: 18, family: 'Playfair Display', weight: 'bold' }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        duration: 2000
+                    }
+                }
+            });
+        }
+
+        // Intersection Observer for animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        });
+
+        document.querySelectorAll('.section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
